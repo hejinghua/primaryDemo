@@ -1,0 +1,36 @@
+{
+  "ret": true,
+  "data": {
+    "sightName": "乌镇(AAAA级景区)",
+    "bannerImg": "https://img.alicdn.com/tfscom/TB1yF4jXL5TBuNjSspmSuuDRVXa_600x600.jpg",
+    "galleryImgs": ["https://img.alicdn.com/tfscom/TB1ULteXQ9WBuNjSspeSuuz5VXa", "https://img.alicdn.com/tfscom/TB15qS0XStYBeNjSspaSuuOOFXa", "https://img.alicdn.com/tfscom/TB1citfXGSWBuNjSsrbSuu0mVXa", "https://img.alicdn.com/tfscom/TB1rqBgXL9TBuNjy0FcSuveiFXa"],
+    "categoryList": [{
+        "title": "门票",
+        "children": [{
+          "title": "西栅门票",
+          "price": "149.80"
+        },{
+          "title": "东栅+西栅联票",
+          "price": "149.80"
+        },{
+          "title": "东栅门票",
+          "price": "149.80"
+        }]
+      }, {
+        "title": "景区套票",
+        "children": [{
+          "title": "西栅门票+通安餐厅",
+          "price": "149.80"
+        }, {
+          "title": "西栅门票+犀牛咖啡吧",
+          "price": "149.80"
+        }]
+      }, {
+        "title": "景区联票",
+        "children": [{
+          "title": "乌镇(西栅大门票) + 乌镇乌村(乌村休闲游)",
+          "price": "149.80"
+        }]
+      }]
+  }
+}

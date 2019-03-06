@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>扫雷</title>
+  <script type="text/javascript" src="./jquery.js"></script>
+  <script>
+    $(document).ready(function () {
+      var $placeArr = [];//用来存储所有$place对象的数组
+      var $playTable = $('<div>').appendTo($('body')); //创建一个div用来存放所有的DOM元素
+
+        //开始按键，并绑定点击事件（开始游戏）和hover
+      var $startBtn = $('<a>').css({
+        'padding': '3px 15px',
+        'line-height': '30px',
+        'font-size': '18px',
+        'text-decoration': 'none',
+        'color': '#ffffff',
+        'cursor': 'pointer',
+        'background': '#ffaa1b',
+        'border': '1px solid #000000'
+      }).appendTo($playTable).text('开始游戏').click(startGame).hover(function () {
+        $startBtn.css({
+          'background': '#FFD81E',
+          'color': '#000000'
+        })
+      }, function () {
+        $startBtn.css({
+          'background': '#ffaa1b',
+          'color': '#ffffff'
+        })
+      });
+      //创建关卡选择的表单
+      (function () {
+        var $form = $('<form>').appendTo($playTable).html('请选择关卡：<br/>').appendTo($playTable).css('margin-top', '5px');
+        var $select = $('<select>').appendTo($form).css({
+          'font-size': '12px',
+          'height': '20px',
+          'padding': '0 10px'
+        }).change(startGame);
+        for (var i = 0; i < 10; i++) {
+          $('<option value="' + (i + 1) + '">第' + (i + 1) + '关</option>').appendTo($select);
+        }
+      })();
+      //创建一个放置生成游戏主体的div
+      var $plat = $('<div>').appendTo($playTable);
+      //声明一个类
+      function Place(parentNode, i, j, mine) {
+        this.$divNode = $('<div>').css({
+          'width': '20px',
+          'height': '20px',
+          'float': 'left',
+          'position': 'relative'
+        }).appendTo(parentNode);
+        $('<span>').css({
+          'background': '#e0e0e0',
+          'display': 'block',
+          'width': '20px',
+          'line-height': '20px',
+          'height': '20px',
+          'text-align': 'center',
+          'position': 'absolute',
+          'border': '1px solid #ffffff',
+          'left': '0',
+          'top': '0'
+        }).appendTo(this.$divNode);
+
+        $('<button>').css({
+          'background': '#cacaca',
+          'width': '20px',
+          'height': '20px',
+          'border': '1px solid #FFFFFF',
+          'position': 'absolute',
+          'left': '0',
+          'top': '0'
+        }).appendTo(this.$divNode);
+        this.valueTr = i;
+        this.valueTd = j;
+        this.mine = mine;
+      }
+      //剩余雷数的提示信息框
+      var $message = $('<div>').appendTo($($playTable).find('form'));
+      //标记的雷数
+      var mineFlag = 0;
+      //标记雷数的提示信息框
+      var $flagDiv = $('<div>').appendTo($playTable);
+
+      //游戏开始的方法
+      function startGame() {
+        //禁用右键的菜单栏
+        $playTable.get(0).oncontextmenu = function (eve) {
+          return false;
+        };
+        var $section = $playTable.find('select');
+        var levelValue = $section.val();
+        var mineNum = levelValue * 5 * (parseInt(levelValue / 2) + 1);
+        var domNum = parseInt(levelValue / 4) * 10 + 10;
+        $message.text('本关卡共有' + mineNum + '颗地雷');
+        $plat.empty();
+        $placeArr.length = 0;
+        mineFlag = 0;
+        $flagDiv.text('您已标记' + mineFlag + '个');
+        createDOM(domNum);
+        bindClickEventToButton(domNum);
+        createMine(mineNum);
+        createSpanInner(domNum);
+      }
+
+      function createDOM(domNum) {
+        $playTable.css({
+          'width': (domNum + 1) * 20 + 'px',
+          'margin': '0 auto',
+          'text-align': 'center'
+        });
+        $plat.appendTo($playTable).css({
+          'width': domNum * 20 + 'px',
+          'height': domNum * 20 + 'px',
+          'border': '1px solid #ccc',
+          'margin': '10px auto'
+        });
+        for (var i = 0; i < domNum; i++) {
+          for (var j = 0; j < domNum; j++) {
+            var $place = new Place($plat, i, j, false);
+            $placeArr.push($place);
+          }
+        }
+      }
+
+      //将点击事件绑定到所有button上
+      function bindClickEventToButton(domNum) {
+        $plat.find('button').mousedown(function (e) {
+          var index = findPlaceIndex(this);
+          var $placeHolder = $placeArr[index];
+          var clickIndex;
+          if (e) {
+            clickIndex = e.button;
+          } else {
+            var index = window.event.button;
+            console.log(index)
+            switch (index) {
+              case 1://左键
+                clickIndex = 0;
+              case 2://右键
+                clickIndex = 2;
+              case 4://中键
+                clickIndex = 1;
+            }
+          }
+          if (clickIndex == 0 || clickIndex == 1) {//点击左键
+            if ($placeHolder.mine) {
+              gameOverMessage();
+            } else {
+              $placeArr.splice(($placeHolder.valueTr * domNum + $placeHolder.valueTd), 1, null);
+              autoOpenSpan($placeHolder, $placeArr, domNum);
+              var count = 0;
+              for (var i = 0; i < $placeArr.length; i++) {
+                if ($placeArr[i] != null && !$placeArr[i].mine) {
+                  count++;
+                }
+              }
+              if (count == 0) {
+                alert('恭喜扫雷成功');
+              }
+            }
+            $(this).hide();
+          } else if (clickIndex == 2) {//点击右键
+            $button = $placeHolder.$divNode.find('button');
+            //IE背景色返回的是'#f00000'，谷歌和火狐返回的是'rgb(240, 0, 0)'
+            if ($button.css('backgroundColor') == '#f00000' || $button.css('backgroundColor') == 'rgb(240, 0, 0)') {
+              $button.css('backgroundColor', '#cacaca');
+              mineFlag--;
+            } else {
+              $button.css('backgroundColor', '#f00000');
+              mineFlag++;
+            }
+
+          }
+          $flagDiv.text('您已标记' + mineFlag + '个');
+
+        })
+      }
+
+
+      function createMine(mineNum) { //随机mineNum个产生地雷
+        for (var i = 0; i < mineNum; i++) {
+          var $minePlace = $placeArr[Math.floor(Math.random() * $placeArr.length)];
+          //如果产生的地雷位置重复了，也就是mine属性已经被设置为true了，就重新产生地雷
+          if ($minePlace.mine) {
+            i--;
+          } else {
+            $minePlace.mine = true;
+          }
+
+        }
+      }
+      //非地雷的地方会有提示周围3*3范围内有多少地雷
+      function createSpanInner(domNum) {
+        //遍历所有place对象找到它的位置并找到它附近3*3范围内的所有place对象
+        for (var i = 0; i < $placeArr.length; i++) {
+          if (!$placeArr[i].mine) {
+            var count = 0;
+            var trNum = $placeArr[i].valueTr;
+            var tdNum = $placeArr[i].valueTd;
+            var $span = $placeArr[i].$divNode.find('span');
+            if (trNum == 0 && tdNum == 0) {//左上角的格子
+              for (var j = 0; j < $placeArr.length; j++) {
+                if ($placeArr[j].valueTr <= trNum + 1 && $placeArr[j].valueTd <= tdNum + 1) {
+                  if ($placeArr[j].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (trNum == 0 && tdNum == domNum - 1) {//右上角的格子
+              for (var j = 0; j < $placeArr.length; j++) {
+                if ($placeArr[j].valueTr <= trNum + 1 && $placeArr[j].valueTd >= tdNum - 1) {
+                  if ($placeArr[j].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (trNum == domNum - 1 && tdNum == 0) {//左下角的格子
+              for (var j = 0; j < $placeArr.length; j++) {
+                if ($placeArr[j].valueTr >= trNum - 1 && $placeArr[j].valueTd <= tdNum + 1) {
+                  if ($placeArr[j].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (trNum == domNum - 1 && tdNum == domNum - 1) {//右下角的格子
+              for (var j = 0; j < $placeArr.length; j++) {
+                if ($placeArr[j].valueTr >= trNum - 1 && $placeArr[j].valueTd >= tdNum - 1) {
+                  if ($placeArr[j].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (trNum == 0) {//第一排
+              for (var x = trNum; x >= trNum && x <= trNum + 1; x++) {
+                for (var y = tdNum - 1; y >= tdNum - 1 && y <= tdNum + 1; y++) {
+                  if ($placeArr[x * domNum + y].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (trNum == domNum - 1) {//最后一排
+              for (var x = trNum - 1; x >= trNum - 1 && x <= trNum; x++) {
+                for (var y = tdNum - 1; y >= tdNum - 1 && y <= tdNum + 1; y++) {
+                  if ($placeArr[x * domNum + y].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (tdNum == 0) {//第一列
+              for (var y = tdNum; y >= tdNum && y <= tdNum + 1; y++) {
+                for (var x = trNum - 1; x >= trNum - 1 && x <= trNum + 1; x++) {
+                  if ($placeArr[x * domNum + y].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else if (tdNum == domNum - 1) {//最后一列
+              for (var y = tdNum - 1; y >= tdNum - 1 && y <= tdNum; y++) {
+                for (var x = trNum - 1; x >= trNum - 1 && x <= trNum + 1; x++) {
+                  if ($placeArr[x * domNum + y].mine) {
+                    count++;
+                  }
+                }
+              }
+            } else {//普通格子
+              for (var x = trNum - 1; x >= trNum - 1 && x <= trNum + 1; x++) {
+                for (var y = tdNum - 1; y >= tdNum - 1 && y <= tdNum + 1; y++) {
+                  if ($placeArr[x * domNum + y].mine) {
+                    count++;
+                  }
+                }
+              }
+            }
+            if (count == 0) {
+              $span.text('');
+            } else {
+              $span.text(count);
+            }
+          }
+        }
+
+      }
+
+      function findPlaceIndex(item) {//找到对象在数组中的位置
+        var btnArr = document.getElementsByTagName('button');
+        for (var i = 0; i < btnArr.length; i++) {
+          if (item == btnArr[i]) {
+            return i;
+          }
+        }
+      }
+
+      //当点击到空的地方时，会自动打开周围的格子直到格子中有数字出现位置
+      function autoOpenSpan($placeHolder, $PlaceArr, domNum) {
+        var spanInner = $placeHolder.$divNode.find('span').text();
+        $placeHolder.$divNode.find('button').hide();
+        if (spanInner == '') {
+          var spanX = $placeHolder.valueTr;
+          var spanY = $placeHolder.valueTd;
+          //找到指定按钮的上下左右的按钮
+          //上面的位置
+          var upPlaceX = spanX - 1;
+          var upPlaceY = spanY;
+
+          if (upPlaceX >= 0) {
+            var $upPlace = $PlaceArr[upPlaceX * domNum + upPlaceY];
+
+            //将验证过的位置用null替代，避免重复验证
+            $PlaceArr.splice(upPlaceX * domNum + upPlaceY, 1, null);
+            if ($upPlace) {
+              $upPlace.$divNode.find('button').hide();
+              var $upPlaceSpan = $upPlace.$divNode.find('span');
+              if ($upPlaceSpan.text() == '') {
+                autoOpenSpan($upPlace, $PlaceArr, domNum)
+              }
+            }
+          }
+
+          //下面的位置
+          var downPlaceX = spanX + 1;
+          var downPlaceY = spanY;
+          if (downPlaceX <= domNum - 1) {
+            var $downPlace = $PlaceArr[downPlaceX * domNum + downPlaceY];
+            $PlaceArr.splice(downPlaceX * domNum + downPlaceY, 1, null);
+            if ($downPlace) {
+              $downPlace.$divNode.find('button').hide();
+              var $downPlaceSpan = $downPlace.$divNode.find('span');
+              if ($downPlaceSpan.text() == '') {
+                autoOpenSpan($downPlace, $PlaceArr, domNum)
+              }
+            }
+          }
+
+          //左边的位置
+          var leftPlaceX = spanX;
+          var leftPlaceY = spanY - 1;
+
+          if (leftPlaceY >= 0) {
+            var $leftPlace = $PlaceArr[leftPlaceX * domNum + leftPlaceY];
+            $PlaceArr.splice(leftPlaceX * domNum + leftPlaceY, 1, null);
+            if ($leftPlace) {
+              $leftPlace.$divNode.find('button').hide();
+              var $leftPlaceSpan = $leftPlace.$divNode.find('span');
+              if ($leftPlaceSpan.text() == '') {
+                autoOpenSpan($leftPlace, $PlaceArr, domNum)
+              }
+            }
+          }
+
+
+          //右边位置
+          var rightPlaceX = spanX;
+          var rightPlaceY = spanY + 1;
+          if (rightPlaceY <= domNum - 1) {
+            var $rightPlace = $PlaceArr[rightPlaceX * domNum + rightPlaceY];
+            $PlaceArr.splice(rightPlaceX * domNum + rightPlaceY, 1, null);
+            if ($rightPlace) {
+              $rightPlace.$divNode.find('button').hide();
+              var $rightPlaceSpan = $rightPlace.$divNode.find('span');
+              if ($rightPlaceSpan.text() == '') {
+                autoOpenSpan($rightPlace, $PlaceArr, domNum)
+              }
+            }
+          }
+
+        }
+
+      }
+      //游戏结束的操作
+      function gameOverMessage() {
+        $plat.find('button').unbind('click');
+        for (var i = 0; i < $placeArr.length; i++) {
+          if ($placeArr[i] && $placeArr[i].mine) {
+            $placeArr[i].$divNode.find('button').hide();
+            $placeArr[i].$divNode.find('span').css('background', '#000000');
+          }
+        }
+        alert('game over');
+      }
+      //初始化游戏开始
+      startGame();
+    }
+
+    )
+  </script>
+  <style>
+    *{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  </style>
+</head>
+
+<body>
+</body>
+
+</html>

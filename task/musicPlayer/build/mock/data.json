@@ -1,0 +1,38 @@
+[
+  {
+    "image": "/source/song_1.jpg",
+    "audio": "/source/song_1.mp3",
+    "song": "红海行动",
+    "album": "红海行动",
+    "singer": "黄景瑜",
+    "duration": 234,
+    "isLove": true
+  },
+  {
+    "image": "/source/song_2.jpg",
+    "audio": "/source/song_2.mp3",
+    "song": "一半",
+    "album": "The Time",
+    "singer": "许魏洲",
+    "duration": 253,
+    "isLove": true
+  },
+  {
+    "image": "/source/song_3.jpg",
+    "audio": "/source/song_3.mp3",
+    "song": "小半",
+    "album": "小梦大半",
+    "singer": "陈粒",
+    "duration": 297,
+    "isLove": false
+  },
+  {
+    "image": "/source/song_4.jpg",
+    "audio": "/source/song_4.mp3",
+    "song": "愿你",
+    "album": "愿你",
+    "singer": "昼夜",
+    "duration": 215,
+    "isLove": true
+  }
+]
